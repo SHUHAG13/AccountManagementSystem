@@ -1,5 +1,5 @@
 ﻿using AccountManagementSystem.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+using AccountManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using MiniAccountApi.Models;
 
@@ -7,7 +7,6 @@ namespace AccountManagementSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-  
     public class ChartOfAccountsController : ControllerBase
     {
         private readonly IGenericRepository<ChartOfAccount> _repository;
@@ -20,52 +19,47 @@ namespace AccountManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var accounts = await _repository.GetAllAsync(c => c.Children, c => c.Parent);
-            return Ok(accounts);
+            var response = await _repository.GetAllAsync(c => c.Children, c => c.Parent);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var account = await _repository.GetByIdAsync(id, c => c.Children, c => c.Parent);
-            if (account == null) return NotFound();
-            return Ok(account);
+            var response = await _repository.GetByIdAsync(id, c => c.Children, c => c.Parent);
+            return response.IsSuccess ? Ok(response) : NotFound(response);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ChartOfAccount account)
         {
-            await _repository.AddAsync(account);
-            var saved = await _repository.SaveChangesAsync();
-            return saved ? Ok(account) : BadRequest("Create failed");
+            var response = await _repository.AddAsync(account);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ChartOfAccount model)
         {
-            var existing = await _repository.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+            var getResponse = await _repository.GetByIdAsync(id);
+            if (!getResponse.IsSuccess || getResponse.Data is not ChartOfAccount existing)
+                return NotFound(getResponse);
 
             existing.AccountName = model.AccountName;
             existing.ParentId = model.ParentId;
 
-            _repository.Update(existing);
-            var saved = await _repository.SaveChangesAsync();
-
-            return saved ? Ok(existing) : BadRequest("Update failed");
+            var updateResponse = await _repository.UpdateAsync(existing);
+            return updateResponse.IsSuccess ? Ok(updateResponse) : BadRequest(updateResponse);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var existing = await _repository.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+            var getResponse = await _repository.GetByIdAsync(id);
+            if (!getResponse.IsSuccess || getResponse.Data is not ChartOfAccount existing)
+                return NotFound(getResponse);
 
-            _repository.Delete(existing);
-            var saved = await _repository.SaveChangesAsync();
-
-            return saved ? Ok("Deleted successfully") : BadRequest("Delete failed");
+            var deleteResponse = await _repository.DeleteAsync(existing);
+            return deleteResponse.IsSuccess ? Ok(deleteResponse) : BadRequest(deleteResponse);
         }
-
     }
 }

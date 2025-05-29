@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using AccountManagementSystem.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MiniAccountApi.Models;
 
@@ -12,6 +13,7 @@ namespace MiniAccountApi.Data
         public DbSet<ChartOfAccount> ChartOfAccounts { get; set; }
         public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<VoucherEntry> VoucherEntries { get; set; }
+        public DbSet<UserModel> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

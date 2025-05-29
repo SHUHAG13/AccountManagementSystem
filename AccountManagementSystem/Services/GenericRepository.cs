@@ -1,4 +1,5 @@
 ﻿using AccountManagementSystem.Interfaces;
+using AccountManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using MiniAccountApi.Data;
 using System.Linq.Expressions;
@@ -16,52 +17,140 @@ namespace AccountManagementSystem.Services
             _dbSet = _context.Set<T>();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes)
+        public async Task<ResponseModel> GetAllAsync(params Expression<Func<T, object>>[] includes)
         {
-            IQueryable<T> query = _context.Set<T>();
-
-            foreach (var include in includes)
+            try
             {
-                query = query.Include(include);
-            }
+                IQueryable<T> query = _dbSet;
 
-            return await query.ToListAsync();
-        }
-
-        public async Task<T?> GetByIdAsync(int id, params Expression<Func<T, object>>[] includes)
-        {
-            IQueryable<T> query = _dbSet;
-
-            if (includes != null)
-            {
                 foreach (var include in includes)
                 {
                     query = query.Include(include);
                 }
+
+                var result = await query.ToListAsync();
+                return new ResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "Data fetched successfully.",
+                    Data = result
+                };
             }
-
-            // Assuming 'Id' is the primary key property name
-            return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
         }
 
-        public async Task AddAsync(T entity)
+        public async Task<ResponseModel> GetByIdAsync(int id, params Expression<Func<T, object>>[] includes)
         {
-            await _dbSet.AddAsync(entity);
+            try
+            {
+                IQueryable<T> query = _dbSet;
+
+                foreach (var include in includes)
+                {
+                    query = query.Include(include);
+                }
+
+                var entity = await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+
+                if (entity == null)
+                {
+                    return new ResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "Entity not found."
+                    };
+                }
+
+                return new ResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "Entity fetched successfully.",
+                    Data = entity
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
         }
 
-        public void Update(T entity)
+        public async Task<ResponseModel> AddAsync(T entity)
         {
-            _dbSet.Update(entity);
+            try
+            {
+                await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+                return new ResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "Entity added successfully.",
+                    Data = entity
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
         }
 
-        public void Delete(T entity)
+        public async Task<ResponseModel> UpdateAsync(T entity)
         {
-            _dbSet.Remove(entity);
+            try
+            {
+                _dbSet.Update(entity);
+                await _context.SaveChangesAsync();
+                return new ResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "Entity updated successfully.",
+                    Data = entity
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
         }
 
-        public async Task<bool> SaveChangesAsync()
+        public async Task<ResponseModel> DeleteAsync(T entity)
         {
-            return (await _context.SaveChangesAsync()) > 0;
+            try
+            {
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+                return new ResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "Entity deleted successfully."
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
         }
 
         public IQueryable<T> GetQueryable()
@@ -69,5 +158,4 @@ namespace AccountManagementSystem.Services
             return _dbSet.AsQueryable();
         }
     }
-           
 }
