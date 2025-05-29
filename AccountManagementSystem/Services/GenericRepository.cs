@@ -18,30 +18,56 @@ namespace AccountManagementSystem.Services
 
         public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes)
         {
-            IQueryable<T> query = _dbSet;
+            IQueryable<T> query = _context.Set<T>();
+
             foreach (var include in includes)
             {
                 query = query.Include(include);
             }
+
             return await query.ToListAsync();
         }
 
         public async Task<T?> GetByIdAsync(int id, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _dbSet;
-            foreach (var include in includes)
+
+            if (includes != null)
             {
-                query = query.Include(include);
+                foreach (var include in includes)
+                {
+                    query = query.Include(include);
+                }
             }
+
+            // Assuming 'Id' is the primary key property name
             return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
         }
 
-        public async Task AddAsync(T entity) => await _dbSet.AddAsync(entity);
+        public async Task AddAsync(T entity)
+        {
+            await _dbSet.AddAsync(entity);
+        }
 
-        public void Update(T entity) => _dbSet.Update(entity);
+        public void Update(T entity)
+        {
+            _dbSet.Update(entity);
+        }
 
-        public void Delete(T entity) => _dbSet.Remove(entity);
+        public void Delete(T entity)
+        {
+            _dbSet.Remove(entity);
+        }
 
-        public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() > 0;
+        public async Task<bool> SaveChangesAsync()
+        {
+            return (await _context.SaveChangesAsync()) > 0;
+        }
+
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
     }
+           
 }

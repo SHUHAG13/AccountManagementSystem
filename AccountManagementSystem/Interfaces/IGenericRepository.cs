@@ -10,5 +10,6 @@ namespace AccountManagementSystem.Interfaces
         void Update(T entity);
         void Delete(T entity);
         Task<bool> SaveChangesAsync();
+        IQueryable<T> GetQueryable();
     }
 }

@@ -7,7 +7,7 @@ namespace AccountManagementSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Accountant")]
+  
     public class ChartOfAccountsController : ControllerBase
     {
         private readonly IGenericRepository<ChartOfAccount> _repository;
