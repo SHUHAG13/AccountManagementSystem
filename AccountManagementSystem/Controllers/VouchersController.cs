@@ -1,5 +1,6 @@
 ﻿using AccountManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MiniAccountApi.Models;
 
@@ -8,11 +9,11 @@ namespace AccountManagementSystem.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin,Accountant")]
-    public class ChartOfAccountsController : ControllerBase
+    public class VouchersController : ControllerBase
     {
-        private readonly IGenericRepository<ChartOfAccount> _repository;
+        private readonly IGenericRepository<Voucher> _repository;
 
-        public ChartOfAccountsController(IGenericRepository<ChartOfAccount> repository)
+        public VouchersController(IGenericRepository<Voucher> repository)
         {
             _repository = repository;
         }
@@ -20,34 +21,42 @@ namespace AccountManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var accounts = await _repository.GetAllAsync(c => c.Children, c => c.Parent);
-            return Ok(accounts);
+            var vouchers = await _repository.GetAllAsync(v => v.Entries, v => v.Entries.Select(e => e.Account));
+            return Ok(vouchers);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var account = await _repository.GetByIdAsync(id, c => c.Children, c => c.Parent);
-            if (account == null) return NotFound();
-            return Ok(account);
+            var voucher = await _repository.GetByIdAsync(id, v => v.Entries, v => v.Entries.Select(e => e.Account));
+            if (voucher == null) return NotFound();
+            return Ok(voucher);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ChartOfAccount account)
+        public async Task<IActionResult> Create([FromBody] Voucher voucher)
         {
-            await _repository.AddAsync(account);
+            await _repository.AddAsync(voucher);
             var saved = await _repository.SaveChangesAsync();
-            return saved ? Ok(account) : BadRequest("Create failed");
+            return saved ? Ok(voucher) : BadRequest("Failed to create voucher.");
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ChartOfAccount model)
+        public async Task<IActionResult> Update(int id, [FromBody] Voucher model)
         {
-            var existing = await _repository.GetByIdAsync(id);
+            // include entries because voucher has child entries
+            var existing = await _repository.GetByIdAsync(id, v => v.Entries);
             if (existing == null) return NotFound();
 
-            existing.AccountName = model.AccountName;
-            existing.ParentId = model.ParentId;
+            existing.VoucherType = model.VoucherType;
+            existing.VoucherDate = model.VoucherDate;
+            existing.ReferenceNo = model.ReferenceNo;
+
+            existing.Entries.Clear();
+            foreach (var entry in model.Entries)
+            {
+                existing.Entries.Add(entry);
+            }
 
             _repository.Update(existing);
             var saved = await _repository.SaveChangesAsync();

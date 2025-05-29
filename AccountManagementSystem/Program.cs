@@ -1,3 +1,4 @@
+using AccountManagementSystem.Interfaces;
 using AccountManagementSystem.Repositories;
 using AccountManagementSystem.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,7 +30,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
-builder.Services.AddTransient<IChartOfAccountRepository, ChartOfAccountRepository>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+//builder.Services.AddTransient<IChartOfAccountRepository, ChartOfAccountRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
