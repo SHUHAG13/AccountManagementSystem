@@ -1,5 +1,4 @@
 using AccountManagementSystem.Interfaces;
-using AccountManagementSystem.Repositories;
 using AccountManagementSystem.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;

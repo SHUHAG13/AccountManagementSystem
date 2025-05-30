@@ -1,5 +1,6 @@
 ﻿using AccountManagementSystem.Interfaces;
 using AccountManagementSystem.Models;
+using AccountManagementSystem.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using MiniAccountApi.Models;
 
@@ -31,14 +32,21 @@ namespace AccountManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ChartOfAccount account)
+        public async Task<IActionResult> Create([FromBody] ChartOfAccountCreateDto account)
         {
-            var response = await _repository.AddAsync(account);
+            var accout=new ChartOfAccount
+            {
+                AccountName = account.AccountName,
+                ParentId = account.ParentId
+            };
+            var response = await _repository.AddAsync(accout);
             return response.IsSuccess ? Ok(response) : BadRequest(response);
+
+
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ChartOfAccount model)
+        public async Task<IActionResult> Update(int id, [FromBody] ChartOfAccountUpdateDto model)
         {
             var getResponse = await _repository.GetByIdAsync(id);
             if (!getResponse.IsSuccess || getResponse.Data is not ChartOfAccount existing)
